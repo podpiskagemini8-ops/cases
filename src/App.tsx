@@ -21,7 +21,7 @@ import {
   RotateCcw,
   ExternalLink
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Types ---
 
@@ -136,7 +136,7 @@ const CaseCard = ({ caseItem, onUnbox, onPreview }: { caseItem: Case; onUnbox: (
 
   return (
     <motion.div
-      whileHover={{ y: -8 }}
+      whileHover={{ y: -4 }}
       className="group relative"
     >
       <div className="absolute inset-0 bg-blue-600/5 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -334,7 +334,7 @@ const CaseOpeningModal = ({ isOpen, caseItem, onClose, onWin }: { isOpen: boolea
 
             <motion.div 
               animate={opening ? { x: -8700 } : { x: 0 }}
-              transition={{ duration: 5, ease: [0.15, 0, 0.05, 1] }}
+              transition={{ duration: 5, ease: "circOut" }}
               className="flex gap-4 px-[400px]"
             >
               {items.map((item, i) => (
