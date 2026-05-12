@@ -1,0 +1,6 @@
+{
+  "name": "GMod Player Dashboard",
+  "description": "A stylish player statistics and case opening dashboard for Garry's Mod servers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
