@@ -8,6 +8,7 @@ import {
   LayoutGrid,
   X,
   Zap,
+  ExternalLink,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -49,6 +50,12 @@ interface InventoryItem extends RewardItem {
 
 const CASE_ICONS = {
   tactical: '/images/Tactical_loot_box_metal_render_202605122028-Photoroom.png',
+  diplomat: '/images/Black_leather_diplomat_briefcase…_202605122025-Photoroom.png',
+  evidence: '/images/Police_evidence_box_crime_scene_202605122022-Photoroom.png',
+  ammo: '/images/Dark_green_ammo_can_icon_202605122020-Photoroom.png',
+  lockbox: '/images/Grey_lockbox_with_brass_padlock_202605122017-Photoroom.png',
+  wooden: '/images/Military_wooden_crate_metal_corners_202605122014-Photoroom.png',
+  military: '/images/Military_loot_box_with_lock_202605122007-Photoroom.png',
 };
 
 // --- Pools & Data ---
@@ -67,7 +74,13 @@ const ITEM_POOL: RewardItem[] = [
 ];
 
 const MOCK_CASES: Case[] = [
-  { id: '1', name: 'GMod Premium Case', price: GMOD_CASE_PRICE, rarity: 'rare', image: CASE_ICONS.tactical },
+  { id: '1', name: 'Tactical Supply', price: 1500, rarity: 'common', image: CASE_ICONS.tactical },
+  { id: '2', name: 'Military Crate', price: 2500, rarity: 'rare', image: CASE_ICONS.military },
+  { id: '3', name: 'Ammo Can', price: 500, rarity: 'common', image: CASE_ICONS.ammo },
+  { id: '4', name: 'Diplomat Case', price: 5000, rarity: 'epic', image: CASE_ICONS.diplomat },
+  { id: '5', name: 'Evidence Box', price: 1000, rarity: 'rare', image: CASE_ICONS.evidence },
+  { id: '6', name: 'Wooden Treasure', price: 200, rarity: 'common', image: CASE_ICONS.wooden },
+  { id: '7', name: 'Secret Lockbox', price: 10000, rarity: 'mythic', image: CASE_ICONS.lockbox },
 ];
 
 // --- Sub-components ---
@@ -155,12 +168,6 @@ const CaseOpeningModal = ({ isOpen, caseItem, onClose, onWin }: { isOpen: boolea
     setTimeout(() => {
       const wonItem = items[winningIndex];
       setWinner(wonItem);
-      
-      // Notify GMod Lua
-      if (window.gmod) {
-          window.gmod.giveReward(wonItem.type, wonItem.value);
-      }
-      
       onWin(wonItem);
     }, 5100);
   };
@@ -284,13 +291,28 @@ export default function App() {
   }, []);
 
   const handleWin = (item: RewardItem) => {
-    if (!window.gmod) setBalance(prev => prev - GMOD_CASE_PRICE);
+    if (!window.gmod && selectedCase) setBalance(prev => prev - selectedCase.price);
     const newItem: InventoryItem = {
       ...item,
       id: Math.random().toString(36).substr(2, 9),
       status: 'inventory'
     };
     setInventory(prev => [newItem, ...prev]);
+  };
+
+  const handleWithdraw = (item: InventoryItem) => {
+    // Notify GMod Lua
+    if (window.gmod) {
+      window.gmod.giveReward(item.type, item.value);
+    }
+    
+    // Remove from web inventory
+    setInventory(prev => prev.filter(i => i.id !== item.id));
+    
+    // Show local feedback if not in GMod
+    if (!window.gmod) {
+      alert(`Item ${item.name} successfully withdrawn to GMod!`);
+    }
   };
 
   return (
@@ -320,17 +342,20 @@ export default function App() {
         </div>
 
         {activeTab === 'cases' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 pb-12">
             {MOCK_CASES.map((c) => (
               <div key={c.id} className="group relative p-12 rounded-[56px] bg-white/[0.04] border border-white/5 backdrop-blur-md transition-all hover:bg-white/[0.07] text-center border-b-4 border-b-blue-600">
-                  <img src={c.image} className="w-48 h-48 mx-auto mb-10 drop-shadow-2xl group-hover:scale-105 transition-transform" alt={c.name} />
+                  <div className="relative mb-10">
+                    <div className="absolute inset-0 bg-blue-500/20 blur-[80px] rounded-full group-hover:bg-blue-500/30 transition-all opacity-0 group-hover:opacity-100" />
+                    <img src={c.image} className="w-48 h-48 mx-auto relative drop-shadow-2xl group-hover:scale-105 transition-transform" alt={c.name} />
+                  </div>
                   <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-4">{c.name}</h3>
                   <button 
                       onClick={() => {
                         if (balance < c.price) return alert("Недостаточно денег!");
                         setSelectedCase(c);
                       }}
-                      className="w-full py-5 bg-white text-black font-black italic rounded-2xl hover:bg-blue-600 hover:text-white transition-all"
+                      className="w-full py-5 bg-white text-black font-black italic rounded-2xl hover:bg-blue-600 hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl"
                   >
                       OPEN FOR ${c.price}
                   </button>
@@ -338,16 +363,31 @@ export default function App() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {inventory.map((item) => (
-                <div key={item.id} className="bg-white/5 border border-white/5 p-8 rounded-[40px] text-center group">
-                    <div className="w-full aspect-square bg-black/20 rounded-3xl mb-4 flex items-center justify-center">
-                        <RewardIcon type={item.type} color={item.color} size={48} />
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+            {inventory.length === 0 ? (
+              <div className="col-span-full py-32 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-[48px]">
+                <Package size={64} className="text-white/10 mb-6" />
+                <p className="text-gray-500 font-black italic uppercase tracking-widest text-sm">Your inventory is empty</p>
+              </div>
+            ) : (
+              inventory.map((item) => (
+                <div key={item.id} className="bg-white/5 border border-white/5 p-8 rounded-[40px] text-center group flex flex-col items-center overflow-hidden">
+                    <div className="w-full aspect-square bg-black/20 rounded-3xl mb-6 flex items-center justify-center relative">
+                        <div className="absolute inset-0 blur-2xl opacity-10" style={{ backgroundColor: item.color }} />
+                        <RewardIcon type={item.type} color={item.color} size={64} />
                     </div>
-                    <h4 className="text-sm font-black text-white italic uppercase tracking-tighter mb-4">{item.name}</h4>
-                    <div className="py-2 bg-green-500/10 rounded-xl text-green-500 text-[10px] font-black uppercase tracking-widest">SAVED</div>
+                    <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-50" style={{ color: item.color }}>{item.rarity}</p>
+                    <h4 className="text-base font-black text-white italic uppercase tracking-tighter mb-6 line-clamp-1">{item.name}</h4>
+                    <button 
+                      onClick={() => handleWithdraw(item)}
+                      className="w-full py-4 bg-white/[0.07] border border-white/5 text-white font-black italic text-xs rounded-2xl hover:bg-white text-black transition-all flex items-center justify-center gap-2"
+                    >
+                      <ExternalLink size={14} />
+                      WITHDRAW
+                    </button>
                 </div>
-            ))}
+              ))
+            )}
           </div>
         )}
       </main>
