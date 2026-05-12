@@ -45,13 +45,13 @@ interface InventoryItem {
 // --- Icons & Images ---
 
 const CASE_ICONS = {
-  tactical: '/src/Tactical_loot_box_metal_render_202605122028-Photoroom.png',
-  diplomat: '/src/Black_leather_diplomat_briefcase…_202605122025-Photoroom.png',
-  evidence: '/src/Police_evidence_box_crime_scene_202605122022-Photoroom.png',
-  ammo: '/src/Dark_green_ammo_can_icon_202605122020-Photoroom.png',
-  lockbox: '/src/Grey_lockbox_with_brass_padlock_202605122017-Photoroom.png',
-  wooden: '/src/Military_wooden_crate_metal_corners_202605122014-Photoroom.png',
-  military: '/src/Military_loot_box_with_lock_202605122007-Photoroom.png',
+  tactical: '/images/Tactical_loot_box_metal_render_202605122028-Photoroom.png',
+  diplomat: '/images/Black_leather_diplomat_briefcase…_202605122025-Photoroom.png',
+  evidence: '/images/Police_evidence_box_crime_scene_202605122022-Photoroom.png',
+  ammo: '/images/Dark_green_ammo_can_icon_202605122020-Photoroom.png',
+  lockbox: '/images/Grey_lockbox_with_brass_padlock_202605122017-Photoroom.png',
+  wooden: '/images/Military_wooden_crate_metal_corners_202605122014-Photoroom.png',
+  military: '/images/Military_loot_box_with_lock_202605122007-Photoroom.png',
 };
 
 // --- Pools & Data ---
