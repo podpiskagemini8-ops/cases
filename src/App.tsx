@@ -159,7 +159,7 @@ const CaseOpeningModal = ({ isOpen, caseItem, onClose, onWin }: { isOpen: boolea
     
     // Call Lua to check/buy
     if (window.gmod) {
-        window.gmod.buyCase(GMOD_CASE_PRICE);
+        window.gmod.buyCase(caseItem?.price || GMOD_CASE_PRICE);
     }
 
     setOpening(true);
@@ -180,7 +180,7 @@ const CaseOpeningModal = ({ isOpen, caseItem, onClose, onWin }: { isOpen: boolea
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/90 backdrop-blur-3xl"
+        className={`absolute inset-0 bg-black/90 ${opening && !winner ? '' : 'backdrop-blur-3xl'}`}
         onClick={!opening ? onClose : undefined}
       />
       
@@ -195,7 +195,7 @@ const CaseOpeningModal = ({ isOpen, caseItem, onClose, onWin }: { isOpen: boolea
             <img src={caseItem.image} alt={caseItem.name} className="w-12 h-12 object-contain" referrerPolicy="no-referrer" />
             <div>
               <h2 className="text-2xl font-black italic tracking-tighter uppercase">{caseItem.name}</h2>
-              <p className="text-xs text-gray-500 font-medium">${GMOD_CASE_PRICE} to open</p>
+              <p className="text-xs text-gray-500 font-medium">${caseItem.price} to open</p>
             </div>
           </div>
           <button 
@@ -209,14 +209,14 @@ const CaseOpeningModal = ({ isOpen, caseItem, onClose, onWin }: { isOpen: boolea
 
         <div className="py-24 relative px-4 flex flex-col items-center">
           <div className="w-full relative h-[180px] overflow-hidden flex items-center select-none bg-black/40 rounded-3xl border border-white/5">
-            <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-1 bg-blue-500 z-20 shadow-[0_0_20px_rgba(59,130,246,0.8)]" />
+            <div className={`absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-1 bg-blue-500 z-20 ${opening && !winner ? '' : 'shadow-[0_0_20px_rgba(59,130,246,0.8)]'}`} />
             <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#0f0f12] via-transparent to-[#0f0f12]" />
 
             <motion.div 
               animate={opening ? { x: - (52 * 196) - 100 } : { x: 0 }}
               transition={{ duration: 5, ease: [0.15, 0, 0.05, 1] }} 
               className="flex gap-4 px-[50%]"
-              style={{ width: 'max-content' }}
+              style={{ width: 'max-content', willChange: 'transform' }}
             >
               {items.map((item, i) => (
                 <div 
@@ -231,6 +231,7 @@ const CaseOpeningModal = ({ isOpen, caseItem, onClose, onWin }: { isOpen: boolea
               ))}
             </motion.div>
           </div>
+
 
           <AnimatePresence>
             {winner && (
@@ -276,7 +277,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('cases');
   const [balance, setBalance] = useState(0);
   const [playerName, setPlayerName] = useState('UNCONNECTED');
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>(() => {
+    const saved = localStorage.getItem('gmod_inventory');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
 
   useEffect(() => {
@@ -289,6 +293,10 @@ export default function App() {
         window.updateGmodData("TEST_PLAYER", 50000);
     }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('gmod_inventory', JSON.stringify(inventory));
+  }, [inventory]);
 
   const handleWin = (item: RewardItem) => {
     if (!window.gmod && selectedCase) setBalance(prev => prev - selectedCase.price);
@@ -306,7 +314,7 @@ export default function App() {
       window.gmod.giveReward(item.type, item.value);
     }
     
-    // Remove from web inventory
+    // Remove from web inventory and localStorage (handled by useEffect)
     setInventory(prev => prev.filter(i => i.id !== item.id));
     
     // Show local feedback if not in GMod
